@@ -1,0 +1,80 @@
+[gd_scene format=3 uid="uid://c2lghsx5jqpdp"]
+
+[ext_resource type="Script" uid="uid://i6gi6pakckhs" path="res://scripts/menu_principal.gd" id="1_i85hu"]
+
+[node name="menuPrincipal" type="Control" unique_id=1167498348]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_i85hu")
+
+[node name="Titulo" type="Label" parent="." unique_id=84077149]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -304.0
+offset_top = -195.5
+offset_right = 304.0
+offset_bottom = -128.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
+text = "Crystal Jump Challenge 3D"
+
+[node name="1jugador" type="Button" parent="." unique_id=1195587029]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -41.0
+offset_top = -15.5
+offset_right = 41.0
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+text = "1 Jugador"
+
+[node name="2jugador" type="Button" parent="." unique_id=1820592141]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -105.5
+offset_top = 58.0
+offset_right = 105.5
+offset_bottom = 116.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+text = "2 Jugadores"
+
+[node name="Puntajes" type="Button" parent="." unique_id=1577514609]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -85.0
+offset_top = -165.0
+offset_right = 85.0
+offset_bottom = -107.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 36
+text = "Puntajes"
+
+[connection signal="pressed" from="1jugador" to="." method="_on_jugador_pressed"]
+[connection signal="pressed" from="2jugador" to="." method="_on_2jugador_pressed"]
+[connection signal="pressed" from="Puntajes" to="." method="_on_puntajes_pressed"]

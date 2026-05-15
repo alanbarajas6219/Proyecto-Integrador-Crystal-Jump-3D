@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://b1oet6owp7gi8"]
+
+[ext_resource type="Script" uid="uid://deq7mf76eh42v" path="res://scripts/ingresar_nombre.gd" id="1_8tiug"]
+[ext_resource type="Script" uid="uid://34lagiyej206" path="res://scripts/iniciar.gd" id="2_oqyn4"]
+
+[node name="ingresarNombre" type="Control" unique_id=1039161369]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8tiug")
+
+[node name="Label" type="Label" parent="." unique_id=1330217931]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -205.5
+offset_top = -159.5
+offset_right = 205.5
+offset_bottom = -92.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
+text = "INGRESA TU NICKNAME"
+
+[node name="LineEdit" type="LineEdit" parent="." unique_id=1580541051]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -251.0
+offset_top = -29.0
+offset_right = 251.0
+offset_bottom = 29.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+placeholder_text = "Selecciona y escribe aqui"
+
+[node name="Iniciar" type="Button" parent="." unique_id=1770546741]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -92.5
+offset_top = -185.0
+offset_right = 92.5
+offset_bottom = -135.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 30
+text = "Iniciar juego"
+script = ExtResource("2_oqyn4")
+
+[connection signal="pressed" from="Iniciar" to="." method="_on_iniciar_pressed"]

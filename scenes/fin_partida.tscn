@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://wwkl8xjfpfi8"]
+
+[ext_resource type="Script" uid="uid://dsjgeldm8rq4d" path="res://scripts/fin_partida.gd" id="1_b0t8q"]
+
+[node name="finPartida" type="Control" unique_id=759212462]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_b0t8q")
+
+[node name="Score" type="Label" parent="." unique_id=863614884]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -63.5
+offset_right = 20.0
+offset_bottom = 3.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
+
+[node name="Tiempo" type="Label" parent="." unique_id=1574961929]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = 33.5
+offset_right = 20.0
+offset_bottom = 100.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
+
+[node name="Label" type="Label" parent="." unique_id=438100034]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -205.5
+offset_top = -201.0
+offset_right = 205.5
+offset_bottom = -129.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 52
+text = "FIN DE EL JUEGO"
+
+[node name="menuPricipal" type="Button" parent="." unique_id=1234339704]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -134.0
+offset_top = 148.0
+offset_right = 134.0
+offset_bottom = 206.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+text = "Volver al menu"
+
+[node name="Puntajes" type="Button" parent="." unique_id=1563759262]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -114.0
+offset_top = -92.0
+offset_right = 114.0
+offset_bottom = -34.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 36
+text = "Ver Puntajes"
+
+[connection signal="pressed" from="menuPricipal" to="." method="_on_menu_pricipal_pressed"]
+[connection signal="pressed" from="Puntajes" to="." method="_on_puntajes_pressed"]

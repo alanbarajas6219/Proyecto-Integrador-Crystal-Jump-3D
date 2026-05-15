@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://c6rlpg2kv8wcr"]
+
+[ext_resource type="Script" uid="uid://jjh5gpf16xwh" path="res://scripts/ingresar_nombre_multi.gd" id="1_q4i55"]
+
+[node name="ingresarNombreMulti" type="Control" unique_id=1172459336]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_q4i55")
+
+[node name="LineEdit2" type="LineEdit" parent="." unique_id=82111270]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -251.0
+offset_top = -56.0
+offset_right = 113.0
+offset_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+placeholder_text = "Selecciona y escribe aqui"
+
+[node name="LineEdit3" type="LineEdit" parent="." unique_id=458008337]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -251.0
+offset_top = 96.0
+offset_right = 124.0
+offset_bottom = 154.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+placeholder_text = "Selecciona y escribe aqui"
+
+[node name="Label" type="Label" parent="." unique_id=1844513753]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -277.5
+offset_top = -211.5
+offset_right = 277.5
+offset_bottom = -144.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
+text = "INGRESEN SUS NICKNAME"
+
+[node name="Label2" type="Label" parent="." unique_id=2006670430]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -94.375
+offset_top = -129.5
+offset_right = 94.375
+offset_bottom = -62.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
+text = "Jugador 1"
+
+[node name="Label3" type="Label" parent="." unique_id=537687270]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -94.0
+offset_top = 29.0
+offset_right = 94.75
+offset_bottom = 96.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
+text = "Jugador 2"
+
+[node name="Button" type="Button" parent="." unique_id=1370419941]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -379.0
+offset_top = -55.0
+offset_right = -201.0
+offset_bottom = 3.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+text = "Confirmar"
+
+[node name="Button2" type="Button" parent="." unique_id=1836361517]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -377.0
+offset_top = 97.0
+offset_right = -199.0
+offset_bottom = 155.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+text = "Confirmar"
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="Button2" to="." method="_on_button_2_pressed"]

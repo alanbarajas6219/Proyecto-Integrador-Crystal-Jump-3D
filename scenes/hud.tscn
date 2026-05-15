@@ -1,0 +1,53 @@
+[gd_scene format=3 uid="uid://5r0c3rqpcojw"]
+
+[ext_resource type="Script" uid="uid://dky16sxpbuho1" path="res://scripts/hud.gd" id="1_37p78"]
+
+[node name="HUD" type="Control" unique_id=1645963190]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_37p78")
+
+[node name="Tiempo" type="Label" parent="." unique_id=1563405279]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 69.0
+offset_right = 179.0
+offset_bottom = 141.0
+theme_override_font_sizes/font_size = 32
+text = "Tiempo: 0"
+
+[node name="Vidas" type="Label" parent="." unique_id=1217810801]
+layout_mode = 0
+offset_left = 33.0
+offset_top = 143.0
+offset_right = 180.0
+offset_bottom = 215.0
+theme_override_font_sizes/font_size = 32
+text = "Vidas: 3"
+
+[node name="Score" type="Label" parent="." unique_id=708532995]
+layout_mode = 0
+offset_left = 35.0
+offset_top = 8.0
+offset_right = 184.0
+offset_bottom = 53.0
+theme_override_font_sizes/font_size = 32
+text = "Score: 0"
+
+[node name="Dificultad" type="Label" parent="." unique_id=300001]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 212.0
+offset_right = 420.0
+offset_bottom = 260.0
+theme_override_font_sizes/font_size = 24
+text = "Dificultad: normal"
+
+[node name="Timer" type="Timer" parent="." unique_id=19555443]
+autostart = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

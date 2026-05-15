@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://dlliy4up7lge1"]
+
+[ext_resource type="Script" uid="uid://bk5kb1f2m5hah" path="res://scripts/mundo_2.gd" id="1_8qq5d"]
+[ext_resource type="PackedScene" uid="uid://5unbrfmq5qt2" path="res://scenes/plataform.tscn" id="2_xdqvp"]
+[ext_resource type="PackedScene" uid="uid://drv6qbxvdyg4h" path="res://scenes/cristal.tscn" id="3_gi8bd"]
+[ext_resource type="PackedScene" uid="uid://cuhi65gpqmowy" path="res://scenes/player.tscn" id="4_tlsbw"]
+[ext_resource type="PackedScene" uid="uid://5r0c3rqpcojw" path="res://scenes/hud.tscn" id="5_a8exk"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_ubft0"]
+sky_horizon_color = Color(0.44, 0.52, 0.63, 1)
+sky_top_color = Color(0.28, 0.34, 0.42, 1)
+ground_bottom_color = Color(0.05, 0.20, 0.33, 1)
+ground_horizon_color = Color(0.12, 0.30, 0.44, 1)
+
+[sub_resource type="Sky" id="Sky_5t1r2"]
+sky_material = SubResource("ProceduralSkyMaterial_ubft0")
+
+[sub_resource type="Environment" id="Environment_sq2yq"]
+background_mode = 2
+sky = SubResource("Sky_5t1r2")
+tonemap_mode = 2
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.40, 0.47, 0.56, 1)
+fog_density = 0.01
+fog_sky_affect = 0.85
+
+[node name="Mundo1" type="Node3D" unique_id=695433178]
+script = ExtResource("1_8qq5d")
+platform_scene = ExtResource("2_xdqvp")
+crystal_scene = ExtResource("3_gi8bd")
+player_id = 1
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1055321524]
+environment = SubResource("Environment_sq2yq")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1232532641]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="player" parent="." unique_id=1408688166 instance=ExtResource("4_tlsbw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="HUD" parent="." unique_id=1645963190 instance=ExtResource("5_a8exk")]
+
+[connection signal="perder_vida" from="player" to="." method="_on_player_perder_vida"]
+[connection signal="pausar" from="HUD" to="." method="_on_hud_pausar"]
