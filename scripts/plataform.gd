@@ -18,13 +18,15 @@ var _mesh_nodes: Array[MeshInstance3D] = []
 var _base_materials: Array = []
 var _score_reported: bool = false
 
-const MAX_STAND_TIME: float = 10.0
-const WARNING_TIME: float = 7.0
+var max_stand_time: float = 10.0
+var warning_time: float = 7.0
 
 func configure_from_api(config: Dictionary, index: int) -> void:
 	platform_index = index
 	difficulty_multiplier = float(config.get("platform_speed_multiplier", 1.0))
 	move_distance = float(config.get("platform_move_distance", 2.4))
+	max_stand_time = float(config.get("stand_time", 10.0))
+	warning_time = max_stand_time * 0.70
 	move_speed = randf_range(1.2, 2.3) * difficulty_multiplier
 
 	if index == 0:
@@ -32,7 +34,7 @@ func configure_from_api(config: Dictionary, index: int) -> void:
 	elif index < 4:
 		type = 0 if randf() < 0.70 else 1
 	else:
-		var roll := randf()
+		var roll = randf()
 		if roll < 0.45:
 			type = 1
 		elif roll < 0.65:
@@ -77,13 +79,14 @@ func _actualizar_temporizador_plataforma(delta: float) -> void:
 
 	_standing_time += delta
 
-	if _standing_time >= WARNING_TIME and not _warning_applied:
+	if _standing_time >= warning_time and not _warning_applied:
 		_aplicar_material_advertencia()
 		AudioManager.play_sfx("warning")
 		_warning_applied = true
 
-	if _standing_time >= MAX_STAND_TIME:
+	if _standing_time >= max_stand_time:
 		if is_instance_valid(self):
+			AudioManager.play_sfx("platform_break")
 			queue_free()
 
 func _reportar_avance_a_hud() -> void:
@@ -91,9 +94,9 @@ func _reportar_avance_a_hud() -> void:
 		return
 	_score_reported = true
 
-	var mundo := get_parent()
+	var mundo = get_parent()
 	if mundo != null and mundo.has_node("HUD"):
-		var hud := mundo.get_node("HUD")
+		var hud = mundo.get_node("HUD")
 		if hud != null and hud.has_method("plataformaAvanzada"):
 			hud.plataformaAvanzada(platform_index)
 
@@ -119,7 +122,7 @@ func _on_area_3d_body_exited(body: Node) -> void:
 		_restaurar_material()
 
 func _aplicar_material_advertencia() -> void:
-	var mat := StandardMaterial3D.new()
+	var mat = StandardMaterial3D.new()
 	mat.albedo_color = Color(1.0, 0.42, 0.16)
 	mat.emission_enabled = true
 	mat.emission = Color(1.0, 0.18, 0.05)
@@ -130,7 +133,7 @@ func _aplicar_material_advertencia() -> void:
 
 func _restaurar_material() -> void:
 	for i in range(_mesh_nodes.size()):
-		var mesh := _mesh_nodes[i]
+		var mesh = _mesh_nodes[i]
 		if is_instance_valid(mesh):
 			mesh.material_override = _base_materials[i]
 

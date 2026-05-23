@@ -2,82 +2,66 @@ extends Control
 
 const UITemplo = preload("res://scripts/ui_templo.gd")
 
-var _extra_buttons: Array[Button] = []
-
 func _ready() -> void:
 	GameState.cambiar_estado(GameState.Estado.MENU)
 	UITemplo.aplicar(self)
 	AudioManager.play_menu_music()
-	_configurar_menu()
+	_crear_menu()
 
-func _configurar_menu() -> void:
-	# Reacomoda botones existentes y agrega opciones que pide la rúbrica:
-	# continuar sesión, historial individual y configuración.
-	var botones: Array[Button] = []
+func _crear_menu() -> void:
+	for child in get_children():
+		if child.name != "FondoTemplo":
+			child.visible = false
 
-	if Global.existe_sesion_guardada():
-		var continuar := _crear_boton_extra("Continuar sesión guardada", _on_continuar_sesion_pressed)
-		botones.append(continuar)
+	# En el menú principal usamos el logo integrado en la nueva imagen de fondo.
+	var panel_fondo = get_node_or_null("FondoTemplo/PanelCristalCentral")
+	if panel_fondo != null:
+		panel_fondo.visible = false
 
-	if has_node("1jugador"):
-		botones.append(get_node("1jugador") as Button)
-	if has_node("2jugador"):
-		botones.append(get_node("2jugador") as Button)
-	if has_node("Puntajes"):
-		botones.append(get_node("Puntajes") as Button)
+	var panel = VBoxContainer.new()
+	panel.name = "PanelMenuPrincipal"
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -290
+	panel.offset_right = 290
+	panel.offset_top = 80
+	panel.offset_bottom = 410
+	panel.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_theme_constant_override("separation", 16)
+	add_child(panel)
 
-	var historial := _crear_boton_extra("Historial individual", _on_historial_pressed)
-	var config := _crear_boton_extra("Configuración", _on_configuracion_pressed)
-	botones.append(historial)
-	botones.append(config)
+	panel.add_child(_crear_boton("JUGAR", _on_jugar_pressed, true))
+	panel.add_child(_crear_boton("Ranking global local", _on_puntajes_pressed, false))
+	panel.add_child(_crear_boton("Historial individual", _on_historial_pressed, false))
+	panel.add_child(_crear_boton("Configuración", _on_configuracion_pressed, false))
+	panel.add_child(_crear_boton("Créditos", _on_creditos_pressed, false))
 
-	for i in range(botones.size()):
-		var b: Button = botones[i]
-		b.anchor_left = 0.5
-		b.anchor_right = 0.5
-		b.anchor_top = 0.5
-		b.anchor_bottom = 0.5
-		b.offset_left = -185
-		b.offset_right = 185
-		b.offset_top = -95 + i * 70
-		b.offset_bottom = -37 + i * 70
-		b.grow_horizontal = Control.GROW_DIRECTION_BOTH
-		b.grow_vertical = Control.GROW_DIRECTION_BOTH
-		UITemplo.estilizar_boton(b)
-
-func _crear_boton_extra(texto: String, callback: Callable) -> Button:
-	var button := Button.new()
+func _crear_boton(texto: String, callback: Callable, principal: bool) -> Button:
+	var button = Button.new()
 	button.text = texto
-	button.name = texto.replace(" ", "_")
-	add_child(button)
+	button.custom_minimum_size = Vector2(390 if principal else 335, 68 if principal else 58)
 	button.pressed.connect(callback)
-	_extra_buttons.append(button)
+	UITemplo.estilizar_boton(button)
+	if principal:
+		var st = button.get_theme_stylebox("normal").duplicate() as StyleBoxFlat
+		st.bg_color = Color(0.04, 0.56, 1.0, 0.98)
+		st.border_color = Color(1.0, 0.82, 0.25, 1.0)
+		st.shadow_size = 20
+		st.shadow_color = Color(0.0, 0.9, 1.0, 0.48)
+		button.add_theme_stylebox_override("normal", st)
+		button.add_theme_font_size_override("font_size", 38)
 	return button
 
-func _on_jugador_pressed() -> void:
+func _on_jugar_pressed() -> void:
 	AudioManager.play_sfx("button")
-	Global.borrar_sesion_guardada()
-	Global.es_multijugador = false
-	Global.j1_vivo = true
-	Global.j2_vivo = true
-	Global.retomar_sesion = false
-	GameState.cambiar_estado(GameState.Estado.REGISTRO)
-	get_tree().change_scene_to_file("res://scenes/ingresar_nombre.tscn")
+	get_tree().change_scene_to_file("res://scenes/seleccion_modo.tscn")
 
 func _on_puntajes_pressed() -> void:
 	AudioManager.play_sfx("button")
 	GameState.cambiar_estado(GameState.Estado.RANKING)
 	get_tree().change_scene_to_file("res://scenes/puntajes.tscn")
-
-func _on_2jugador_pressed() -> void:
-	AudioManager.play_sfx("button")
-	Global.borrar_sesion_guardada()
-	Global.es_multijugador = true
-	Global.j1_vivo = true
-	Global.j2_vivo = true
-	Global.retomar_sesion = false
-	GameState.cambiar_estado(GameState.Estado.REGISTRO)
-	get_tree().change_scene_to_file("res://scenes/ingresar_nombre_multi.tscn")
 
 func _on_historial_pressed() -> void:
 	AudioManager.play_sfx("button")
@@ -89,14 +73,6 @@ func _on_configuracion_pressed() -> void:
 	GameState.cambiar_estado(GameState.Estado.CONFIGURACION)
 	get_tree().change_scene_to_file("res://scenes/configuracion.tscn")
 
-func _on_continuar_sesion_pressed() -> void:
+func _on_creditos_pressed() -> void:
 	AudioManager.play_sfx("button")
-	if not Global.cargar_sesion_en_memoria():
-		return
-
-	GameState.cambiar_estado(GameState.Estado.CARGANDO_API)
-
-	if Global.es_multijugador:
-		get_tree().change_scene_to_file("res://scenes/pantalla_dividida.tscn")
-	else:
-		get_tree().change_scene_to_file("res://scenes/mundo_2.tscn")
+	get_tree().change_scene_to_file("res://scenes/creditos.tscn")

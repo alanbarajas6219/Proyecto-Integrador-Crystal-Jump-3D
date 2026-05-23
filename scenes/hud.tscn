@@ -36,14 +36,14 @@ offset_top = 8.0
 offset_right = 184.0
 offset_bottom = 53.0
 theme_override_font_sizes/font_size = 32
-text = "Score: 0"
+text = "Puntaje: 0"
 
 [node name="Dificultad" type="Label" parent="." unique_id=300001]
 layout_mode = 0
 offset_left = 28.0
 offset_top = 212.0
-offset_right = 420.0
-offset_bottom = 260.0
+offset_right = 520.0
+offset_bottom = 340.0
 theme_override_font_sizes/font_size = 24
 text = "Dificultad: normal"
 

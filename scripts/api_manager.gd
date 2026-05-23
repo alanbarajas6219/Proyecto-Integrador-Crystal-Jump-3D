@@ -4,7 +4,7 @@ signal config_recibida(config: Dictionary)
 signal config_fallback()
 signal api_mensaje(texto: String)
 
-const MAX_REINTENTOS := 3
+const MAX_REINTENTOS = 3
 
 var ultima_config: Dictionary = {
 	"dificultad": "normal",
@@ -27,7 +27,7 @@ func _base_url() -> String:
 func obtener_config_partida(es_multijugador: bool, player_id: int) -> Dictionary:
 	for intento in range(1, MAX_REINTENTOS + 1):
 		api_mensaje.emit("Consultando API... intento %d/%d" % [intento, MAX_REINTENTOS])
-		var url := "%s/todos/%d" % [_base_url(), randi_range(1, 20)]
+		var url = "%s/todos/%d" % [_base_url(), randi_range(1, 20)]
 		var respuesta: Dictionary = await _get_json(url)
 
 		if bool(respuesta.get("ok", false)):
@@ -49,12 +49,12 @@ func enviar_resultado_remoto(payload: Dictionary) -> void:
 
 func _enviar_resultado_interno(payload: Dictionary) -> void:
 	api_mensaje.emit("Sincronizando resultado...")
-	var request := HTTPRequest.new()
+	var request = HTTPRequest.new()
 	add_child(request)
 
-	var headers := ["Content-Type: application/json", "Accept: application/json"]
-	var body := JSON.stringify(payload)
-	var err := request.request("%s/posts" % _base_url(), headers, HTTPClient.METHOD_POST, body)
+	var headers = ["Content-Type: application/json", "Accept: application/json"]
+	var body = JSON.stringify(payload)
+	var err = request.request("%s/posts" % _base_url(), headers, HTTPClient.METHOD_POST, body)
 
 	if err != OK:
 		request.queue_free()
@@ -71,11 +71,11 @@ func _enviar_resultado_interno(payload: Dictionary) -> void:
 		api_mensaje.emit("Error al sincronizar resultado. Se conserva localmente.")
 
 func _get_json(url: String) -> Dictionary:
-	var request := HTTPRequest.new()
+	var request = HTTPRequest.new()
 	request.timeout = 7.0
 	add_child(request)
 
-	var err := request.request(url, ["Accept: application/json"], HTTPClient.METHOD_GET)
+	var err = request.request(url, ["Accept: application/json"], HTTPClient.METHOD_GET)
 	if err != OK:
 		request.queue_free()
 		return {"ok": false}
@@ -101,14 +101,14 @@ func _generar_config_desde_api(datos: Dictionary, es_multijugador: bool, player_
 	var completed: bool = bool(datos.get("completed", false))
 
 	var selector: int = (external_id + user_id + player_id) % 3
-	var dificultad := "normal"
-	var distancia_min := 4.1
-	var distancia_max := 5.5
-	var lateral_max := 2.4
-	var crystal_chance := 0.55
-	var speed_mult := 1.0
-	var move_distance := 2.4
-	var score_mult := 1.0
+	var dificultad = "normal"
+	var distancia_min = 4.1
+	var distancia_max = 5.5
+	var lateral_max = 2.4
+	var crystal_chance = 0.55
+	var speed_mult = 1.0
+	var move_distance = 2.4
+	var score_mult = 1.0
 
 	if selector == 1:
 		dificultad = "media"

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bnqxu5ujib4av"]
 
 [ext_resource type="PackedScene" uid="uid://dlliy4up7lge1" path="res://scenes/mundo_2.tscn" id="1_gjgkk"]
-[ext_resource type="Script" uid="uid://x4ck52km7k5c" path="res://scripts/pantalla_dividida.gd" id="2_pausa"]
+[ext_resource type="Script" path="res://scripts/pantalla_dividida.gd" id="2_pausa"]
 
 [node name="PantallaDividida" type="Control" unique_id=1003688859]
 layout_mode = 3
@@ -30,10 +30,11 @@ stretch = true
 own_world_3d = true
 handle_input_locally = false
 audio_listener_enable_3d = true
-size = Vector2i(958, 1080)
+size = Vector2i(574, 648)
 render_target_update_mode = 4
 
 [node name="Mundo1" parent="HBoxContainer/ContenedorJ1/SubViewport" unique_id=695433178 instance=ExtResource("1_gjgkk")]
+player_id = 1
 
 [node name="ContenedorJ2" type="SubViewportContainer" parent="HBoxContainer" unique_id=116020409]
 layout_mode = 2
@@ -45,7 +46,7 @@ stretch = true
 own_world_3d = true
 handle_input_locally = false
 audio_listener_enable_3d = true
-size = Vector2i(958, 1080)
+size = Vector2i(574, 648)
 render_target_update_mode = 4
 
 [node name="Mundo1" parent="HBoxContainer/ContenedorJ2/SubViewport" unique_id=2138944605 instance=ExtResource("1_gjgkk")]

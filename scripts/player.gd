@@ -1,10 +1,13 @@
 extends CharacterBody3D
 
-const SPEED: float = 6.4
-const JUMP_VELOCITY: float = 7.0
-const GRAVITY_MULTIPLIER: float = 1.45
-const AIR_CONTROL: float = 0.68
-const MAX_JUMPS: int = 2
+const SPEED: float = 6.2
+const JUMP_VELOCITY: float = 7.8
+const GRAVITY_MULTIPLIER: float = 1.70
+const AIR_CONTROL: float = 0.78
+const BASE_MAX_JUMPS: int = 1
+const POWER_MAX_JUMPS: int = 2
+const COYOTE_TIME: float = 0.14
+const JUMP_BUFFER_TIME: float = 0.16
 
 const CharacterSceneP1: PackedScene = preload("res://assets/characters/Player1.glb")
 const CharacterSceneP2: PackedScene = preload("res://assets/characters/Player2.glb")
@@ -20,6 +23,11 @@ var player_id: int = 1
 
 var _gravity: float = float(ProjectSettings.get_setting("physics/3d/default_gravity"))
 var _jump_count: int = 0
+var _coyote_timer: float = 0.0
+var _jump_buffer_timer: float = 0.0
+var _double_jump_remaining: float = 0.0
+var _was_on_floor: bool = false
+
 var _visual_root: Node3D
 var _visual_model: Node3D
 var _loaded_model_player_id: int = 0
@@ -27,9 +35,8 @@ var _loading_visual: bool = false
 var _visual_time: float = 0.0
 var _base_visual_y: float = 0.0
 var _enter_was_down: bool = false
-
-func _get_target_height_for_player() -> float:
-	return model_target_height
+var _shadow_marker: MeshInstance3D
+var _landing_marker: MeshInstance3D
 
 @onready var fallback_mesh: MeshInstance3D = get_node_or_null("MeshInstance3D") as MeshInstance3D
 
@@ -37,59 +44,84 @@ func _ready() -> void:
 	posicion_inicial = global_position
 	_crear_visual_root()
 	_cargar_personaje_visual()
-
-func _crear_visual_root() -> void:
-	if _visual_root != null:
-		return
-	_visual_root = Node3D.new()
-	_visual_root.name = "VisualRoot"
-	add_child(_visual_root)
+	_crear_marcadores()
 
 func _physics_process(delta: float) -> void:
 	_cargar_personaje_visual()
+	if _double_jump_remaining > 0.0:
+		_double_jump_remaining = maxf(_double_jump_remaining - delta, 0.0)
 
-	if is_on_floor():
+	var on_floor = is_on_floor()
+	if on_floor:
+		_coyote_timer = COYOTE_TIME
+		if not _was_on_floor:
+			AudioManager.play_sfx("landing")
 		_jump_count = 0
-
-	if not is_on_floor():
+	else:
+		_coyote_timer = maxf(_coyote_timer - delta, 0.0)
 		velocity.y -= _gravity * GRAVITY_MULTIPLIER * delta
 
-	var izq := "move_left_" + str(player_id)
-	var der := "move_right_" + str(player_id)
-	var ade := "move_forward_" + str(player_id)
-	var atr := "move_back_" + str(player_id)
-	var salto := "jump_" + str(player_id)
+	_jump_buffer_timer = maxf(_jump_buffer_timer - delta, 0.0)
+
+	var izq = "move_left_" + str(player_id)
+	var der = "move_right_" + str(player_id)
+	var ade = "move_forward_" + str(player_id)
+	var atr = "move_back_" + str(player_id)
+	var salto = "jump_" + str(player_id)
 
 	var jump_pressed: bool = Input.is_action_just_pressed(salto)
 	if player_id == 2:
 		jump_pressed = jump_pressed or _enter_just_pressed()
+	if jump_pressed:
+		_jump_buffer_timer = JUMP_BUFFER_TIME
 
-	if jump_pressed and _jump_count < MAX_JUMPS:
-		velocity.y = JUMP_VELOCITY
-		_jump_count += 1
-		AudioManager.play_sfx("jump")
+	_intentar_salto()
 
-	var input_dir := Input.get_vector(izq, der, ade, atr)
-
-	# Movimiento lineal en el mundo. El CharacterBody NO gira, así la cámara no se tuerce.
-	# W/Arriba = -Z, S/Abajo = +Z, A/Izq = -X, D/Der = +X.
-	var direction := Vector3(input_dir.x, 0.0, input_dir.y)
+	var input_dir = Input.get_vector(izq, der, ade, atr)
+	var direction = Vector3(input_dir.x, 0.0, input_dir.y)
 	if direction.length() > 1.0:
 		direction = direction.normalized()
 
-	var control := 1.0 if is_on_floor() else AIR_CONTROL
-
+	var control = 1.0 if on_floor else AIR_CONTROL
 	if direction.length() > 0.05:
-		velocity.x = move_toward(velocity.x, direction.x * SPEED, SPEED * 10.0 * control * delta)
-		velocity.z = move_toward(velocity.z, direction.z * SPEED, SPEED * 10.0 * control * delta)
+		velocity.x = move_toward(velocity.x, direction.x * SPEED, SPEED * 10.5 * control * delta)
+		velocity.z = move_toward(velocity.z, direction.z * SPEED, SPEED * 10.5 * control * delta)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, SPEED * 8.0 * delta)
 		velocity.z = move_toward(velocity.z, 0.0, SPEED * 8.0 * delta)
 
 	move_and_slide()
+	_actualizar_marcadores()
 	_animar_visual(delta, input_dir)
 	revisar_caida()
+	_was_on_floor = is_on_floor()
 
+func _max_jumps_actual() -> int:
+	return POWER_MAX_JUMPS if _tiene_doble_salto() else BASE_MAX_JUMPS
+
+func _tiene_doble_salto() -> bool:
+	return _double_jump_remaining > 0.0
+
+func activar_doble_salto(duration: float = 10.0) -> void:
+	_double_jump_remaining = maxf(_double_jump_remaining, duration)
+	AudioManager.play_sfx("powerup")
+
+func _intentar_salto() -> void:
+	if _jump_buffer_timer <= 0.0:
+		return
+	var grounded_or_coyote = is_on_floor() or _coyote_timer > 0.0
+	var max_jumps = _max_jumps_actual()
+	if grounded_or_coyote:
+		velocity.y = JUMP_VELOCITY
+		_jump_count = 1
+		_jump_buffer_timer = 0.0
+		_coyote_timer = 0.0
+		AudioManager.play_sfx("jump")
+	elif _jump_count < max_jumps:
+		velocity.y = JUMP_VELOCITY * 0.92
+		_jump_count += 1
+		_jump_buffer_timer = 0.0
+		AudioManager.play_sfx("double_jump")
 
 func _enter_just_pressed() -> bool:
 	var enter_down: bool = Input.is_key_pressed(KEY_ENTER) or Input.is_key_pressed(KEY_KP_ENTER)
@@ -99,6 +131,7 @@ func _enter_just_pressed() -> bool:
 
 func revisar_caida() -> void:
 	if global_position.y < altura_muerte:
+		AudioManager.play_sfx("fall")
 		perder_vida.emit()
 		velocity = Vector3.ZERO
 		_jump_count = 0
@@ -107,82 +140,120 @@ func revisar_caida() -> void:
 		else:
 			global_position = Vector3(0, 2.0, 0)
 
-func _cargar_personaje_visual() -> void:
-	if _visual_root == null:
+func _crear_marcadores() -> void:
+	_shadow_marker = _crear_disco(Color(0.0, 0.0, 0.0, 0.55), 0.45)
+	_landing_marker = _crear_disco(Color(0.1, 0.95, 1.0, 0.70), 0.35)
+	_landing_marker.visible = false
+	var parent = get_parent()
+	if parent != null:
+		parent.call_deferred("add_child", _shadow_marker)
+		parent.call_deferred("add_child", _landing_marker)
+
+func _crear_disco(color: Color, radius: float) -> MeshInstance3D:
+	var mesh = CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius
+	mesh.height = 0.025
+	mesh.radial_segments = 32
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var node = MeshInstance3D.new()
+	node.mesh = mesh
+	node.material_override = mat
+	node.top_level = true
+	return node
+
+func _actualizar_marcadores() -> void:
+	var result = _raycast_suelo()
+	if result.is_empty():
+		if _shadow_marker != null:
+			_shadow_marker.visible = false
+		if _landing_marker != null:
+			_landing_marker.visible = false
 		return
-	if _loading_visual:
+	var pos: Vector3 = result.get("position")
+	if _shadow_marker != null:
+		_shadow_marker.visible = true
+		_shadow_marker.global_position = pos + Vector3(0, 0.035, 0)
+	if _landing_marker != null:
+		var ayuda_facil = Global.api_dificultad == "facil"
+		_landing_marker.visible = ayuda_facil and not is_on_floor()
+		_landing_marker.global_position = pos + Vector3(0, 0.065, 0)
+
+func _raycast_suelo() -> Dictionary:
+	var space = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(global_position + Vector3(0, 0.5, 0), global_position + Vector3(0, -18.0, 0))
+	query.exclude = [get_rid()]
+	return space.intersect_ray(query)
+
+func _cargar_personaje_visual() -> void:
+	if _visual_root == null or _loading_visual:
 		return
 	if _loaded_model_player_id == player_id and _visual_root.get_child_count() > 0:
 		return
-
 	var requested_player_id: int = player_id
 	_loading_visual = true
-
 	for child in _visual_root.get_children():
 		child.queue_free()
-
 	var scene: PackedScene = CharacterSceneP1 if requested_player_id == 1 else CharacterSceneP2
-	var model_node := scene.instantiate() as Node3D
+	var model_node = scene.instantiate() as Node3D
 	if model_node == null:
 		if fallback_mesh != null:
 			fallback_mesh.visible = true
 		_loading_visual = false
 		return
-
 	model_node.name = "ModeloPlayer%d" % requested_player_id
 	_visual_root.add_child(model_node)
 	_visual_model = model_node
 	_visual_model.rotation_degrees = Vector3(0.0, model_yaw_degrees, 0.0)
-
 	if fallback_mesh != null:
 		fallback_mesh.visible = false
-
 	await get_tree().process_frame
-
-	# Si el padre cambió player_id mientras se importaba/cargaba el modelo,
-	# recargamos para evitar que el Player 2 se quede con el diseño del Player 1.
 	if requested_player_id != player_id:
 		_loading_visual = false
 		_loaded_model_player_id = 0
 		call_deferred("_cargar_personaje_visual")
 		return
-
 	_ajustar_modelo_a_capsula()
 	_loaded_model_player_id = requested_player_id
 	_loading_visual = false
 
+func _crear_visual_root() -> void:
+	if _visual_root != null:
+		return
+	_visual_root = Node3D.new()
+	_visual_root.name = "VisualRoot"
+	add_child(_visual_root)
+
 func _ajustar_modelo_a_capsula() -> void:
 	if _visual_model == null:
 		return
-
 	_visual_model.scale = Vector3.ONE
 	_visual_model.position = Vector3.ZERO
-
-	var aabb := _calcular_aabb_modelo(_visual_model)
+	var aabb = _calcular_aabb_modelo(_visual_model)
 	if aabb.size.y <= 0.01:
 		_visual_model.scale = Vector3.ONE * 0.02
 		_visual_model.position = Vector3(0, -0.9, 0)
 		return
-
 	var scale_factor: float = model_target_height / aabb.size.y
 	_visual_model.scale = Vector3.ONE * scale_factor
-
 	await get_tree().process_frame
-	var adjusted := _calcular_aabb_modelo(_visual_model)
+	var adjusted = _calcular_aabb_modelo(_visual_model)
 	_visual_model.position.y -= adjusted.position.y + 0.90
 	_base_visual_y = _visual_root.position.y
 
 func _calcular_aabb_modelo(root: Node3D) -> AABB:
-	var has_aabb := false
-	var min_v := Vector3(INF, INF, INF)
-	var max_v := Vector3(-INF, -INF, -INF)
-
+	var has_aabb = false
+	var min_v = Vector3(INF, INF, INF)
+	var max_v = Vector3(-INF, -INF, -INF)
 	for mesh_instance in _obtener_meshes(root):
-		var mi := mesh_instance as MeshInstance3D
-		var local_aabb := mi.get_aabb()
+		var mi = mesh_instance as MeshInstance3D
+		var local_aabb = mi.get_aabb()
 		for corner in _aabb_corners(local_aabb):
-			var global_corner := mi.to_global(corner)
-			var local_to_player := _visual_root.to_local(global_corner)
+			var global_corner = mi.to_global(corner)
+			var local_to_player = _visual_root.to_local(global_corner)
 			min_v.x = minf(min_v.x, local_to_player.x)
 			min_v.y = minf(min_v.y, local_to_player.y)
 			min_v.z = minf(min_v.z, local_to_player.z)
@@ -190,13 +261,12 @@ func _calcular_aabb_modelo(root: Node3D) -> AABB:
 			max_v.y = maxf(max_v.y, local_to_player.y)
 			max_v.z = maxf(max_v.z, local_to_player.z)
 			has_aabb = true
-
 	if not has_aabb:
 		return AABB(Vector3.ZERO, Vector3.ONE)
 	return AABB(min_v, max_v - min_v)
 
 func _obtener_meshes(node: Node) -> Array:
-	var result := []
+	var result = []
 	if node is MeshInstance3D:
 		result.append(node)
 	for child in node.get_children():
@@ -204,31 +274,17 @@ func _obtener_meshes(node: Node) -> Array:
 	return result
 
 func _aabb_corners(aabb: AABB) -> Array:
-	var p := aabb.position
-	var s := aabb.size
-	return [
-		p,
-		p + Vector3(s.x, 0, 0),
-		p + Vector3(0, s.y, 0),
-		p + Vector3(0, 0, s.z),
-		p + Vector3(s.x, s.y, 0),
-		p + Vector3(s.x, 0, s.z),
-		p + Vector3(0, s.y, s.z),
-		p + s
-	]
+	var p = aabb.position
+	var s = aabb.size
+	return [p, p + Vector3(s.x, 0, 0), p + Vector3(0, s.y, 0), p + Vector3(0, 0, s.z), p + Vector3(s.x, s.y, 0), p + Vector3(s.x, 0, s.z), p + Vector3(0, s.y, s.z), p + s]
 
 func _animar_visual(delta: float, input_dir: Vector2) -> void:
 	if _visual_root == null:
 		return
-
-	# El personaje mantiene siempre la misma orientación visual.
-	# Se mueve hacia adelante, atrás, izquierda o derecha sin girar la cámara ni cambiar de pose.
 	_visual_time += delta
-	var moving := input_dir.length() > 0.05
-	var bob := sin(_visual_time * (10.0 if moving else 3.0)) * (0.025 if moving and is_on_floor() else 0.006)
-
+	var moving = input_dir.length() > 0.05
+	var bob = sin(_visual_time * (10.0 if moving else 3.0)) * (0.025 if moving and is_on_floor() else 0.006)
 	_visual_root.position.y = _base_visual_y + bob
 	_visual_root.rotation = Vector3.ZERO
-
 	if _visual_model != null:
 		_visual_model.rotation_degrees = Vector3(0.0, model_yaw_degrees, 0.0)

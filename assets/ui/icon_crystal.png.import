@@ -2,24 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://begjydvewu1da"
-path.s3tc="res://.godot/imported/crystal_collectible_1.jpg-2e2437b63a338f3a7196389bb81a457a.s3tc.ctex"
+uid="uid://o87nicee21lt"
+path="res://.godot/imported/icon_crystal.png-9ad151f47b09ac71651672b57d51aae3.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
-}
-generator_parameters={
-"md5": "dea3b80d2e338ebf65c1080d06c2edf9"
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/models/crystal_collectible_1.jpg"
-dest_files=["res://.godot/imported/crystal_collectible_1.jpg-2e2437b63a338f3a7196389bb81a457a.s3tc.ctex"]
+source_file="res://assets/ui/icon_crystal.png"
+dest_files=["res://.godot/imported/icon_crystal.png-9ad151f47b09ac71651672b57d51aae3.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -27,7 +23,7 @@ compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=true
+mipmaps/generate=false
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
@@ -41,4 +37,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

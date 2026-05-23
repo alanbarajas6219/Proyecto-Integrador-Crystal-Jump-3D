@@ -21,16 +21,102 @@ var sfx_volume: float = 0.85
 var calidad_visual: String = "media"
 var api_base_url: String = "https://jsonplaceholder.typicode.com"
 
+var dificultad_elegida: String = "normal"
+var modo_pendiente: String = "individual"
+var api_mensaje_actual: String = ""
+
+var cristalesJ1: int = 0
+var cristalesJ2: int = 0
+var plataformasJ1: int = 0
+var plataformasJ2: int = 0
+var caidasJ1: int = 0
+var caidasJ2: int = 0
+var vidasFinalJ1: int = 3
+var vidasFinalJ2: int = 3
+var dificultad_maxima_j1: String = "normal"
+var dificultad_maxima_j2: String = "normal"
+
+
 var retomar_sesion: bool = false
 var sesion_cargada: Dictionary = {}
 
 var db = null
-const DB_PATH := "user://basededatos.db"
-const JSON_PATH := "user://game_data.json"
+const DB_PATH = "user://basededatos.db"
+const JSON_PATH = "user://game_data.json"
 
 var _use_web_fallback: bool = false
 var _sqlite_ok: bool = false
 var _store: Dictionary = {}
+
+
+func set_modo_pendiente(modo: String) -> void:
+	modo_pendiente = modo
+	es_multijugador = modo == "multijugador"
+
+func set_dificultad_elegida(valor: String) -> void:
+	dificultad_elegida = valor
+	api_dificultad = valor
+	score_multiplier = float(get_difficulty_profile(valor).get("score_multiplier", 1.0))
+
+func get_difficulty_profile(valor: String) -> Dictionary:
+	match valor:
+		"facil":
+			return {"dificultad":"facil", "distancia_min":3.45, "distancia_max":4.65, "lateral_max":1.75, "crystal_chance":0.68, "platform_speed_multiplier":0.78, "platform_move_distance":1.65, "score_multiplier":0.90, "stand_time":13.0}
+		"normal":
+			return {"dificultad":"normal", "distancia_min":4.05, "distancia_max":5.45, "lateral_max":2.35, "crystal_chance":0.56, "platform_speed_multiplier":1.00, "platform_move_distance":2.40, "score_multiplier":1.00, "stand_time":10.0}
+		"dificil":
+			return {"dificultad":"dificil", "distancia_min":4.55, "distancia_max":6.05, "lateral_max":2.95, "crystal_chance":0.46, "platform_speed_multiplier":1.25, "platform_move_distance":2.95, "score_multiplier":1.25, "stand_time":8.0}
+		"extremo":
+			return {"dificultad":"extremo", "distancia_min":4.95, "distancia_max":6.55, "lateral_max":3.45, "crystal_chance":0.38, "platform_speed_multiplier":1.50, "platform_move_distance":3.45, "score_multiplier":1.50, "stand_time":6.5}
+		_:
+			return get_difficulty_profile("normal")
+
+func reiniciar_estadisticas_partida() -> void:
+	cristalesJ1 = 0
+	cristalesJ2 = 0
+	plataformasJ1 = 0
+	plataformasJ2 = 0
+	caidasJ1 = 0
+	caidasJ2 = 0
+	vidasFinalJ1 = 3
+	vidasFinalJ2 = 3
+	dificultad_maxima_j1 = dificultad_elegida
+	dificultad_maxima_j2 = dificultad_elegida
+
+func actualizar_stats_jugador(player_id: int, cristales: int, plataformas: int, caidas: int, vidas: int, dificultad_actual: String) -> void:
+	if player_id == 1:
+		cristalesJ1 = cristales
+		plataformasJ1 = plataformas
+		caidasJ1 = caidas
+		vidasFinalJ1 = vidas
+		dificultad_maxima_j1 = _max_dificultad(dificultad_maxima_j1, dificultad_actual)
+	else:
+		cristalesJ2 = cristales
+		plataformasJ2 = plataformas
+		caidasJ2 = caidas
+		vidasFinalJ2 = vidas
+		dificultad_maxima_j2 = _max_dificultad(dificultad_maxima_j2, dificultad_actual)
+
+func _dificultad_nivel(valor: String) -> int:
+	match valor:
+		"facil":
+			return 0
+		"normal":
+			return 1
+		"dificil":
+			return 2
+		"extremo":
+			return 3
+		_:
+			return 1
+
+func _max_dificultad(a: String, b: String) -> String:
+	return a if _dificultad_nivel(a) >= _dificultad_nivel(b) else b
+
+func get_stats_jugador(player_id: int) -> Dictionary:
+	if player_id == 1:
+		return {"cristales": cristalesJ1, "plataformas": plataformasJ1, "caidas": caidasJ1, "vidas": vidasFinalJ1, "dificultad_maxima": dificultad_maxima_j1}
+	return {"cristales": cristalesJ2, "plataformas": plataformasJ2, "caidas": caidasJ2, "vidas": vidasFinalJ2, "dificultad_maxima": dificultad_maxima_j2}
 
 func _ready() -> void:
 	_use_web_fallback = OS.has_feature("web")
@@ -60,7 +146,7 @@ func _default_store() -> Dictionary:
 	}
 
 func _asegurar_store() -> void:
-	var defaults := _default_store()
+	var defaults = _default_store()
 	for key in defaults.keys():
 		if not _store.has(key):
 			_store[key] = defaults[key]
@@ -80,7 +166,7 @@ func _asegurar_store() -> void:
 func _cargar_json_store() -> void:
 	if not FileAccess.file_exists(JSON_PATH):
 		return
-	var file := FileAccess.open(JSON_PATH, FileAccess.READ)
+	var file = FileAccess.open(JSON_PATH, FileAccess.READ)
 	if file == null:
 		return
 	var parsed = JSON.parse_string(file.get_as_text())
@@ -90,7 +176,7 @@ func _cargar_json_store() -> void:
 
 func _guardar_json_store() -> void:
 	_asegurar_store()
-	var file := FileAccess.open(JSON_PATH, FileAccess.WRITE)
+	var file = FileAccess.open(JSON_PATH, FileAccess.WRITE)
 	if file == null:
 		return
 	file.store_string(JSON.stringify(_store, "	"))
@@ -128,7 +214,7 @@ func _to_int(value: Variant, default_value: int = 0) -> int:
 		TYPE_FLOAT:
 			return int(round(value))
 		TYPE_STRING:
-			var txt := str(value).strip_edges()
+			var txt = str(value).strip_edges()
 			if txt == "":
 				return default_value
 			if txt.is_valid_int():
@@ -150,7 +236,7 @@ func _to_float(value: Variant, default_value: float = 0.0) -> float:
 		TYPE_INT:
 			return float(value)
 		TYPE_STRING:
-			var txt := str(value).strip_edges()
+			var txt = str(value).strip_edges()
 			if txt == "":
 				return default_value
 			if txt.is_valid_float():
@@ -295,15 +381,15 @@ func setScoreTiempo(score_: int, tiempo_: int, score2: int, tiempo2: int) -> voi
 	tiempoJ2 = tiempo2
 
 func get_or_create_player(nombre: String) -> int:
-	var clean_name := nombre.strip_edges()
+	var clean_name = nombre.strip_edges()
 	if clean_name == "":
 		clean_name = "Jugador"
 	var players: Array = _players()
-	var idx := _find_player_index_by_name(clean_name)
+	var idx = _find_player_index_by_name(clean_name)
 	if idx >= 0:
 		return _to_int(Dictionary(players[idx]).get("id", 0))
 
-	var nuevo := {
+	var nuevo = {
 		"id": _next_id("player"),
 		"nombre": clean_name,
 		"fecha_creacion": Time.get_datetime_string_from_system(),
@@ -315,7 +401,7 @@ func get_or_create_player(nombre: String) -> int:
 	_guardar_json_store()
 	return int(nuevo["id"])
 
-func guardar_fila_sql(nombre: String, puntos: int, tiempo: int, modo: String = "individual", resultado: String = "finalizado", partida_id: int = 0) -> void:
+func guardar_fila_sql(nombre: String, puntos: int, tiempo: int, modo: String = "individual", resultado: String = "finalizado", partida_id: int = 0, cristales: int = 0, plataformas: int = 0, caidas: int = 0, vidas_restantes: int = 0, dificultad_maxima: String = "") -> void:
 	var jugador_id: int = get_or_create_player(nombre)
 	var history: Array = _history()
 	history.append({
@@ -325,7 +411,12 @@ func guardar_fila_sql(nombre: String, puntos: int, tiempo: int, modo: String = "
 		"nombre": nombre,
 		"score": puntos,
 		"tiempo": tiempo,
+		"cristales": cristales,
+		"plataformas": plataformas,
+		"caidas": caidas,
+		"vidas_restantes": vidas_restantes,
 		"dificultad": api_dificultad,
+		"dificultad_maxima": dificultad_maxima if dificultad_maxima != "" else api_dificultad,
 		"modo": modo,
 		"resultado": resultado,
 		"fecha": Time.get_datetime_string_from_system()
@@ -333,7 +424,7 @@ func guardar_fila_sql(nombre: String, puntos: int, tiempo: int, modo: String = "
 	_store["history"] = history
 
 	var players: Array = _players()
-	var idx := _find_player_index_by_name(nombre)
+	var idx = _find_player_index_by_name(nombre)
 	if idx >= 0:
 		var player: Dictionary = Dictionary(players[idx])
 		player["partidas_jugadas"] = _to_int(player.get("partidas_jugadas", 0)) + 1
@@ -362,8 +453,8 @@ func finalizar_partida() -> void:
 			resultado_j1 = "empate"
 			resultado_j2 = "empate"
 
-	var partida_id := _next_id("match")
-	var partida := {
+	var partida_id = _next_id("match")
+	var partida = {
 		"id": partida_id,
 		"modo": modo,
 		"fecha_inicio": Time.get_datetime_string_from_system(),
@@ -375,6 +466,12 @@ func finalizar_partida() -> void:
 		"score_j2": scoreJ2,
 		"tiempo_j1": tiempoJ1,
 		"tiempo_j2": tiempoJ2,
+		"cristales_j1": cristalesJ1,
+		"cristales_j2": cristalesJ2,
+		"plataformas_j1": plataformasJ1,
+		"plataformas_j2": plataformasJ2,
+		"caidas_j1": caidasJ1,
+		"caidas_j2": caidasJ2,
 		"dificultad": api_dificultad,
 		"enviado_api": 0
 	}
@@ -383,12 +480,12 @@ func finalizar_partida() -> void:
 	_store["matches"] = matches
 
 	if es_multijugador:
-		guardar_fila_sql(nombreJ1, scoreJ1, tiempoJ1, modo, resultado_j1, partida_id)
-		guardar_fila_sql(nombreJ2, scoreJ2, tiempoJ2, modo, resultado_j2, partida_id)
+		guardar_fila_sql(nombreJ1, scoreJ1, tiempoJ1, modo, resultado_j1, partida_id, cristalesJ1, plataformasJ1, caidasJ1, vidasFinalJ1, dificultad_maxima_j1)
+		guardar_fila_sql(nombreJ2, scoreJ2, tiempoJ2, modo, resultado_j2, partida_id, cristalesJ2, plataformasJ2, caidasJ2, vidasFinalJ2, dificultad_maxima_j2)
 	else:
-		guardar_fila_sql(nombreJ1, scoreJ1, tiempoJ1, modo, "finalizado", partida_id)
+		guardar_fila_sql(nombreJ1, scoreJ1, tiempoJ1, modo, "finalizado", partida_id, cristalesJ1, plataformasJ1, caidasJ1, vidasFinalJ1, dificultad_maxima_j1)
 
-	var payload := {
+	var payload = {
 		"modo": modo,
 		"jugador_1": nombreJ1,
 		"jugador_2": nombreJ2,
@@ -396,6 +493,10 @@ func finalizar_partida() -> void:
 		"score_j2": scoreJ2,
 		"tiempo_j1": tiempoJ1,
 		"tiempo_j2": tiempoJ2,
+		"cristales_j1": cristalesJ1,
+		"cristales_j2": cristalesJ2,
+		"plataformas_j1": plataformasJ1,
+		"plataformas_j2": plataformasJ2,
 		"ganador_id": ganador_id,
 		"dificultad": api_dificultad,
 		"fecha": Time.get_datetime_string_from_system()
@@ -405,7 +506,7 @@ func finalizar_partida() -> void:
 
 	borrar_sesion_guardada()
 	_guardar_json_store()
-	print("Partida guardada en persistencia híbrida (JSON + SQLite si está disponible).")
+	print("Partida guardada en persistencia local JSON compatible con Web.")
 
 func _sort_score_desc(a: Dictionary, b: Dictionary) -> bool:
 	return _to_int(a.get("score", 0)) > _to_int(b.get("score", 0))
@@ -423,11 +524,11 @@ func obtener_mejores_puntajes() -> Array:
 	return arr
 
 func obtener_historial_jugador(nombre: String) -> Dictionary:
-	var clean_name := nombre.strip_edges()
+	var clean_name = nombre.strip_edges()
 	if clean_name == "":
 		return {"found": false, "message": "Debes escribir un nombre."}
 
-	var idx := _find_player_index_by_name(clean_name)
+	var idx = _find_player_index_by_name(clean_name)
 	if idx < 0:
 		return {"found": false, "message": "No existe historial para ese jugador."}
 
@@ -499,7 +600,7 @@ func obtener_sesion_guardada() -> Dictionary:
 	return {}
 
 func cargar_sesion_en_memoria() -> bool:
-	var s := obtener_sesion_guardada()
+	var s = obtener_sesion_guardada()
 	if s.is_empty():
 		return false
 	sesion_cargada = s

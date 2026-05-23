@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://5unbrfmq5qt2"]
 
 [ext_resource type="Script" uid="uid://bti1ao5wfya07" path="res://scripts/plataform.gd" id="1_pkbe5"]
-[ext_resource type="PackedScene" uid="uid://r2a2534pce5i" path="res://assets/models/platform_temple_breakable.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://assets/models/platform_temple_breakable.glb" id="2_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_pkbe5"]
 size = Vector3(3, 0.7, 3)

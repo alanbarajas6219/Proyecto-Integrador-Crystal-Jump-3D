@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://bvqu4foek0fvy" path="res://scripts/historial_jugador.gd" id="1_hist"]
+[ext_resource type="Script" path="res://scripts/historial_jugador.gd" id="1_hist"]
 
 [node name="HistorialJugador" type="Control"]
 layout_mode = 3
